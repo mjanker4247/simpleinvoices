@@ -4,24 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Simple Invoices is a PHP-based web application for invoice management that has been running since 2005. It's a traditional LAMP stack application using PHP with the Zend Framework v1.11, MySQL database, and Smarty templating engine.
+Simple Invoices is a PHP-based web application for invoice management that has been running since 2005. It's a traditional LAMP stack application using PHP with the Zend Framework (ZF1-Future), MySQL database, and Laravel Blade templating engine.
 
 ## Architecture
 
 ### Core Structure
 - **Entry Point**: `index.php` - Main controller handling all requests via modules/views pattern
 - **Configuration**: `config/config.php` - INI-style config file with database, email, and system settings
-- **Initialization**: `include/init.php` and `include/init_pre.php` - Bootstrap files that set up Zend Framework, Smarty, and core dependencies
+- **Initialization**: `include/init.php` and `include/init_pre.php` - Bootstrap files that set up Zend Framework, Blade (`BladeView`), database, and core dependencies
 - **Modules**: `modules/` directory contains feature-specific controllers (invoices, customers, billers, products, etc.)
-- **Templates**: `templates/default/` contains Smarty template files for UI rendering
+- **Templates**: `templates/default/` contains Laravel Blade template files (`.blade.php`) for UI rendering
 - **Classes**: `include/class/` contains business logic classes for core entities
 
 ### Key Dependencies
-- **Zend Framework 1.24.4 (ZF1-Future)**: Located in `library/Zend/` - PHP 8.1+ compatible community fork
-- **PHPMailer 6.10.0**: Modern email library in `library/phpmailer/` - Full PHP 8.1+ compatibility with namespaces
-- **Smarty**: Template engine in `library/smarty/`
-- **HTML2PDF**: PDF generation library in `library/pdf/`
+All PHP dependencies are managed via Composer (`vendor/autoload.php`):
+- **Zend Framework 1.24.4 (ZF1-Future)** (`shardj/zf1-future`): PHP 8.1+ compatible community fork
+- **PHPMailer 6.10.0** (`phpmailer/phpmailer`): Email library with full PHP 8.1+ support
+- **jenssegers/blade**: Laravel Blade template engine (replaces Smarty)
+- **spipu/html2pdf**: PDF generation
+- **ezyang/htmlpurifier**: HTML sanitization
 - **jQuery**: Frontend JavaScript framework with plugins in `include/jquery/`
+
+The `include/blade_view.php` wraps Blade with a Smarty-compatible API (`assign()`, `display()`, `fetch()`) and includes precompilers that convert legacy Smarty syntax (`{$var}`, `{section}`, `{html_options}`, pipe modifiers) to Blade equivalents during template compilation.
 
 ### Database Support
 - Primary: MySQL (configured in `config/config.php`)
@@ -47,11 +51,13 @@ The application uses a modular architecture where each feature is organized in `
 ## Development Workflow
 
 ### Local Development Setup
-1. Clone repository: `git clone [repo-url]`
-2. **Zend Framework**: Now uses ZF1-Future (v1.24.4) which is compatible with PHP 8.1+
+1. Clone recursively: `git clone --recursive [repo-url]`
+2. Install dependencies: `composer install`
 3. Configure database settings in `config/config.php`
 4. Ensure `tmp/` directory is writable for caching and logs
 5. Access via web server (typically Apache/Nginx with PHP 8.1+)
+
+**Note**: `config/custom.config.php` overrides `config/config.php` if present.
 
 ### PHP Compatibility
 - **Current**: PHP 8.1+ fully supported (tested with PHP 8.4.5)
@@ -90,12 +96,13 @@ The application uses a modular architecture where each feature is organized in `
 - `include/functions.php` - Utility functions
 
 ### Key Templates
-- `templates/default/main.tpl` - Main application layout
+- `templates/default/main.blade.php` - Main application layout
+- `templates/default/header.blade.php`, `footer.blade.php`, `menu.blade.php` - Layout partials
 - `templates/invoices/` - Invoice-specific templates
 
 ### Logs and Temp Files
 - `tmp/log/` - Application logs (si.log, php.log, paypal_ipn_results.log)
-- `tmp/cache/` - Smarty template cache
+- `tmp/cache/` - Blade compiled template cache
 - `tmp/database_backups/` - Generated database backups
 
 ## Version Information
@@ -104,11 +111,9 @@ The application uses a modular architecture where each feature is organized in `
 - Last Stable: 2011.1 (bleeding edge master branch recommended)
 
 ## Notes for Development
-- This is legacy PHP code that has been modernized for PHP 8.1+ compatibility
-- **Email System**: Uses PHPMailer 6.10.0 with modern namespaces and PHP 8.4 support
-- **Framework**: ZF1-Future provides updated Zend Framework 1.x compatibility
-- No modern dependency management (Composer) - uses manual includes and git submodules
-- Template caching and PHP include paths are critical for proper functioning
-- All file access should go through `index.php` - direct file access is blocked
+- This is legacy PHP code modernized for PHP 8.1+ compatibility
+- **Template Engine**: Templates use Laravel Blade (`.blade.php`). The `BladeView` wrapper in `include/blade_view.php` bridges legacy Smarty-style calls to Blade. New templates should use native Blade syntax; precompilers handle legacy Smarty patterns during migration.
+- **Template Cache**: Blade compiles templates to `tmp/cache/`. If templates render incorrectly after edits, clear this directory.
+- **Dependency Management**: Uses Composer (`composer.json`). Run `composer install` to set up. Legacy PayPal library (`library/paypal/`) is loaded manually.
+- All file access must go through `index.php` - direct file access is blocked by the `BROWSE` constant check
 - Multi-language support is extensive but requires careful handling of text strings
-- **SSL/TLS Support**: PHPMailer 6.10.0 includes improved encryption and security options
