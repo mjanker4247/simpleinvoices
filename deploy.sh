@@ -97,7 +97,7 @@ cmd_up() {
             -e "MYSQL_DATABASE=${DB_NAME}" \
             -p "${DB_PORT_HOST}:3306" \
             -v "${MYSQL_VOLUME}:/var/lib/mysql" \
-            -v "${SCRIPT_DIR}/databases/mysql/Full_Simple_Invoices.sql:/docker-entrypoint-initdb.d/init.sql" \
+            -v "${SCRIPT_DIR}/databases/mysql:/docker-entrypoint-initdb.d" \
             mysql:8.0
         success "MySQL container started."
     fi
